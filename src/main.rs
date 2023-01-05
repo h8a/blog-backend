@@ -1,9 +1,12 @@
 use std::net::SocketAddr;
 
 use axum::{
-    routing::get,
+    routing::{get, post},
     Router
 };
+
+mod resources;
+mod types;
 
 async fn healthcheck() -> &'static str {
     "OK"
@@ -13,7 +16,8 @@ async fn healthcheck() -> &'static str {
 async fn main() {
 
     let app = Router::new()
-        .route("/healthcheck", get(healthcheck));
+        .route("/healthcheck", get(healthcheck))
+        .route("/auth/login", post(resources::auth::login_user));
 
     let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
 
