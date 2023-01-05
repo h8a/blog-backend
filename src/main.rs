@@ -7,6 +7,7 @@ use axum::{
 
 mod resources;
 mod types;
+mod store;
 
 async fn healthcheck() -> &'static str {
     "OK"
@@ -14,6 +15,13 @@ async fn healthcheck() -> &'static str {
 
 #[tokio::main]
 async fn main() {
+
+    let store = store::Store::new("postgres://test_user:test_password@localhost:5411/test1").await;
+
+    sqlx::migrate!()
+        .run(&store.clone().connection)
+        .await
+        .expect("Cannot run migration");
 
     let app = Router::new()
         .route("/healthcheck", get(healthcheck))
