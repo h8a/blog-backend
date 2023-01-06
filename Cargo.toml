@@ -11,3 +11,6 @@ serde = { version = "1.0", features = ["derive"] }
 serde_json = { version = "1.0.91" }
 sqlx = { version = "0.6", features = [ "runtime-tokio-rustls", "migrate", "postgres" ] }
 tokio = { version = "1.0", features = ["full"] }
+
+[dev-dependencies]
+axum-test-helper = "0.*" # alternatively specify the version as "0.2.0"
