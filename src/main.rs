@@ -6,8 +6,8 @@ use axum::{
 };
 
 mod resources;
-mod types;
 mod store;
+mod types;
 
 async fn healthcheck() -> &'static str {
     "OK"
@@ -15,7 +15,6 @@ async fn healthcheck() -> &'static str {
 
 #[tokio::main]
 async fn main() {
-
     let store = store::Store::new("postgres://test_user:test_password@localhost:5411/test1").await;
 
     sqlx::migrate!()
@@ -35,4 +34,13 @@ async fn main() {
         .serve(app.into_make_service())
         .await
         .unwrap();
+}
+
+#[cfg(test)]
+mod tests {
+    #[tokio::test]
+    async fn test_checkhealth() {
+        let health = super::healthcheck().await;
+        assert_eq!(health, "OK");
+    }
 }
