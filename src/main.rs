@@ -1,38 +1,5 @@
-use std::net::SocketAddr;
+use blog_backend::main as server;
 
-use axum::{
-    routing::{get, post},
-    Router,
-};
-
-mod resources;
-mod types;
-mod store;
-
-async fn healthcheck() -> &'static str {
-    "OK"
-}
-
-#[tokio::main]
-async fn main() {
-
-    let store = store::Store::new("postgres://test_user:test_password@localhost:5411/test1").await;
-
-    sqlx::migrate!()
-        .run(&store.clone().connection)
-        .await
-        .expect("Cannot run migration");
-
-    let app = Router::new()
-        .route("/healthcheck", get(healthcheck))
-        .route("/auth/login", post(resources::auth::login_user))
-        .route("/auth/register", post(resources::auth::register_user))
-        .with_state(store);
-
-    let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
-
-    axum::Server::bind(&addr)
-        .serve(app.into_make_service())
-        .await
-        .unwrap();
+fn main() {
+  server()
 }
