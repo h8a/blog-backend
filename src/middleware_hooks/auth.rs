@@ -35,7 +35,7 @@ fn header_is_valid(header: Option<&str>) -> bool {
         Some(token) => {
             let token: Vec<&str> = token.split(" ").collect();
             let suffix = token[0];
-            if suffix == "Bearer" {
+            if suffix == dotenv::var("JWT_PREFIX").unwrap() {
                 token_is_valid(token[1])
             } else {
                 false
