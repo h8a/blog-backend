@@ -9,6 +9,7 @@ use dotenv;
 mod middleware_hooks;
 mod resources;
 mod types;
+mod utils;
 mod store;
 
 async fn healthcheck() -> &'static str {

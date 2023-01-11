@@ -4,7 +4,7 @@ use axum::http::{request::Parts, StatusCode};
 use sqlx::postgres::{PgPool, PgPoolOptions, PgRow};
 use sqlx::Row;
 
-use crate::types::auth::RegisterUserAuth;
+use crate::types::auth::{RegisterUserAuth, UserAuthId};
 
 #[derive(Clone, Debug)]
 pub struct Store {
@@ -47,7 +47,7 @@ impl Store {
         match sqlx::query(
             "INSERT INTO users (username, password, name, last_name, surname, picture)
             VALUES ($1, $2, $3, $4, $5, $6)
-            RETURNING username, password, name, last_name, surname, picture"
+            RETURNING id, username, password, name, last_name, surname, picture"
         )
         .bind(new_user.username)
         .bind(new_user.password)
@@ -56,6 +56,7 @@ impl Store {
         .bind(new_user.surname)
         .bind(new_user.picture)
         .map(|row: PgRow| RegisterUserAuth {
+            id: Some(UserAuthId{id: row.get("id")}),
             username: row.get("username"),
             password: row.get("password"),
             name: row.get("name"),
@@ -68,6 +69,24 @@ impl Store {
             Ok(user) => Ok(user),
             Err(e) => Err(internal_error(e))
         }
+    }
+
+    pub async fn get_user_by_username(
+        &self,
+        username: &str,
+    ) -> Result<UserAuthId, (StatusCode, String)> {
+
+        println!("USERNAME: {:?}", username);
+
+        match sqlx::query("SELECT id FROM users WHERE username = $1")
+            .bind(username)
+            .map(|row: PgRow| UserAuthId {
+                id: row.get("id"),
+            })
+            .fetch_one(&self.connection).await {
+                Ok(user) => Ok(user),
+                Err(e) => Err(internal_error(e))
+            }
     }
 }
 

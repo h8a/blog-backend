@@ -7,7 +7,13 @@ pub struct UserAuth {
 }
 
 #[derive(Deserialize, Serialize, Debug)]
+pub struct UserAuthId {
+    pub id: i32,
+}
+
+#[derive(Deserialize, Serialize, Debug)]
 pub struct RegisterUserAuth {
+    pub id: Option<UserAuthId>,
     pub username: String,
     pub password: String,
     pub name: String,
