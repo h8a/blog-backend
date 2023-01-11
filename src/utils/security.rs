@@ -1,6 +1,6 @@
 use chrono::{Duration, Utc};
 use jsonwebtoken::{
-    decode_header,
+    // decode_header,
     decode,
     encode,
     Algorithm,
@@ -50,7 +50,15 @@ pub fn jwt_encode(user_id: &i32) -> String {
 }
 
 // let token = decode::<Claims>(&token, &DecodingKey::from_secret("secret".as_ref()), &Validation::default())?;
-pub fn jwt_decode(token: &String) {
-    println!("{:?}", decode_header(&token));
-    println!("{:?}", decode::<Claims>(&token, &DecodingKey::from_secret(dotenv::var("JWT_SECRET").unwrap().as_ref()), &Validation::new(Algorithm::HS512)).unwrap());
+pub fn jwt_decode(token: &str) -> Result<i32, bool> {
+    // println!("{:?}", decode_header(&token));
+    match decode::<Claims>(
+            &token, 
+            &DecodingKey::from_secret(dotenv::var("JWT_SECRET").unwrap().as_ref()
+        ), 
+        &Validation::new(Algorithm::HS512)
+    ) {
+        Ok(user) => Ok(user.claims.id.parse::<i32>().unwrap()),
+        Err(_) => Err(false)
+    }
 }

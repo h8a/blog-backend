@@ -76,8 +76,6 @@ impl Store {
         username: &str,
     ) -> Result<UserAuthId, (StatusCode, String)> {
 
-        println!("USERNAME: {:?}", username);
-
         match sqlx::query("SELECT id FROM users WHERE username = $1")
             .bind(username)
             .map(|row: PgRow| UserAuthId {
