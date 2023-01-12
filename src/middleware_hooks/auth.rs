@@ -16,7 +16,7 @@ pub async fn authorization<B>(req: Request<B>, next: Next<B>) -> Result<Response
         .and_then(|header| header.to_str().ok());
 
     match req.uri().path() {
-        "/auth/register" | "/auth/login" => {
+        "/auth/register" | "/auth/login" | "/healthcheck" => {
             Ok(next.run(req).await)
         },
         _ => {
