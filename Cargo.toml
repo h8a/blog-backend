@@ -1,10 +1,28 @@
 [package]
-name = "blog-backend"
+name = "blog_backend"
 version = "0.1.0"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+path = "src/lib.rs"
+
+[[bin]]
+path = "src/main.rs"
+name = "blog_backend"
 
 [dependencies]
-axum = "0.6.1"
+axum = { version = "0.6.1" }
+chrono = { version = "0.4.23" }
+dotenv = { version = "0.15.0" }
+jsonwebtoken = { version = "8.2.0" }
+pbkdf2 = "0.11.0"
+rand_core = { version = "0.6", features = ["std"] }
+reqwest = "0.11"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = { version = "1.0.91" }
+sqlx = { version = "0.6", features = [ "runtime-tokio-rustls", "migrate", "postgres" ] }
 tokio = { version = "1.0", features = ["full"] }
+
+[dev-dependencies]
+axum-test-helper = "0.*" # alternatively specify the version as "0.2.0"
