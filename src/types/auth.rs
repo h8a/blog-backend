@@ -6,12 +6,12 @@ pub struct UserAuth {
     pub password: String,
 }
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone, Copy)]
 pub struct UserAuthId {
     pub id: i32,
 }
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct RegisterUserAuth {
     pub id: Option<UserAuthId>,
     pub username: String,

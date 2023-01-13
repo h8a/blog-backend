@@ -9,12 +9,19 @@ use jsonwebtoken::{
     Header,
     Validation
 };
+use pbkdf2::{
+    password_hash::{
+        rand_core::OsRng,
+        PasswordHash, PasswordHasher, SaltString, PasswordVerifier
+    },
+    Pbkdf2
+};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Claims {
     pub aud: Option<String>,         // Optional. Audience
-    pub exp: usize,                    // Required (validate_exp defaults to true in validation). Expiration time (as UTC timestamp)
+    pub exp: usize,                  // Required (validate_exp defaults to true in validation). Expiration time (as UTC timestamp)
     pub iat: Option<usize>,          // Optional. Issued at (as UTC timestamp)
     pub iss: Option<String>,         // Optional. Issuer
     pub nbf: Option<usize>,          // Optional. Not Before (as UTC timestamp)
@@ -22,7 +29,6 @@ pub struct Claims {
     pub id: String,
 }
 
-// let token = encode(&Header::default(), &my_claims, &EncodingKey::from_secret("secret".as_ref())).unwrap();
 pub fn jwt_encode(user_id: &i32) -> String {
 
     let exp_seconds: i64 = dotenv::var("JWT_EXP").unwrap().parse::<i64>().unwrap();
@@ -49,7 +55,6 @@ pub fn jwt_encode(user_id: &i32) -> String {
         .unwrap()
 }
 
-// let token = decode::<Claims>(&token, &DecodingKey::from_secret("secret".as_ref()), &Validation::default())?;
 pub fn jwt_decode(token: &str) -> Result<i32, bool> {
     // println!("{:?}", decode_header(&token));
     match decode::<Claims>(
@@ -61,4 +66,14 @@ pub fn jwt_decode(token: &str) -> Result<i32, bool> {
         Ok(user) => Ok(user.claims.id.parse::<i32>().unwrap()),
         Err(_) => Err(false)
     }
+}
+
+pub fn encode_password(password: &[u8]) -> String {
+    let salt = SaltString::generate(&mut OsRng);
+    Pbkdf2.hash_password(password, &salt).unwrap().to_string()
+}
+
+pub fn decode_password(password_hash: &str, password: &[u8]) -> bool {
+    let parsed_hash = PasswordHash::new(&password_hash).unwrap();
+    Pbkdf2.verify_password(password, &parsed_hash).is_ok()
 }

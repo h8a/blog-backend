@@ -74,12 +74,18 @@ impl Store {
     pub async fn get_user_by_username(
         &self,
         username: &str,
-    ) -> Result<UserAuthId, (StatusCode, String)> {
+    ) -> Result<RegisterUserAuth, (StatusCode, String)> {
 
-        match sqlx::query("SELECT id FROM users WHERE username = $1")
+        match sqlx::query("SELECT * FROM users WHERE username = $1")
             .bind(username)
-            .map(|row: PgRow| UserAuthId {
-                id: row.get("id"),
+            .map(|row: PgRow| RegisterUserAuth {
+                id: Some(UserAuthId{id: row.get("id")}),
+                username: row.get("username"),
+                password: row.get("password"),
+                name: row.get("name"),
+                last_name: row.get("last_name"),
+                surname: row.get("surname"),
+                picture: row.get("picture")
             })
             .fetch_one(&self.connection).await {
                 Ok(user) => Ok(user),
