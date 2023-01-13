@@ -12,7 +12,7 @@ path = "src/main.rs"
 name = "blog_backend"
 
 [dependencies]
-axum = { version = "0.6.1" }
+axum = { version = "0.6.1", features = ["multipart"] }
 chrono = { version = "0.4.23" }
 dotenv = { version = "0.15.0" }
 jsonwebtoken = { version = "8.2.0" }
