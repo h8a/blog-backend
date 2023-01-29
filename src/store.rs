@@ -2,9 +2,11 @@ use axum::async_trait;
 use axum::extract::{FromRef,FromRequestParts};
 use axum::http::{request::Parts, StatusCode};
 use sqlx::postgres::{PgPool, PgPoolOptions, PgRow};
-use sqlx::Row;
+use sqlx::{Row, types::Uuid};
+// use uuid::Uuid;
 
 use crate::types::auth::{RegisterUserAuth, UserAuthId};
+use crate::types::media::{Media, MediaId};
 
 #[derive(Clone, Debug)]
 pub struct Store {
@@ -91,6 +93,38 @@ impl Store {
                 Ok(user) => Ok(user),
                 Err(e) => Err(internal_error(e))
             }
+    }
+
+    pub async fn add_file(
+        &self,
+        name: &str,
+        name_generated: Uuid,
+        content_type: &str,
+        path: &str
+    ) -> Result<Media, (StatusCode, String)> {
+        match sqlx::query(
+            "INSERT INTO media (name, name_generated, content_type, path) VALUES ($1, $2, $3, $4)
+            RETURNING id, name, name_generated, content_type, path"
+        )
+        .bind(name)
+        .bind(name_generated)
+        .bind(content_type)
+        .bind(path)
+        .map(|row: PgRow| Media {
+            id: Some(MediaId{id: row.get("id")}),
+            name: row.get("name"),
+            name_generated: row.get("name_generated"),
+            content_type: row.get("content_type"),
+            path: row.get("path"),
+        })
+        .fetch_one(&self.connection)
+        .await {
+            Ok(media) => Ok(media),
+            Err(e) => {
+                println!("ERROR MEDIA: {:?}", e);
+                Err(internal_error(e))
+            }
+        }
     }
 }
 
