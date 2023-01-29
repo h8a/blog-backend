@@ -1,4 +1,4 @@
-use std::env;
+use std::{env, path::Path};
 
 use axum::{
     extract::{State, Multipart},
@@ -29,13 +29,21 @@ pub async fn upload_file(headers: HeaderMap, store: State<Store>, mut multiplart
 
         create_dir_all(format!("{}/media/{}", env::current_dir().unwrap().to_string_lossy(), &user_id)).await;
 
-        let path_file = format!("{}/media/{}/{}", env::current_dir().unwrap().to_string_lossy(), user_id, file_name);
+        let extension_file = file_name.split(".").collect::<Vec<&str>>()[1];
+        let unique_name = Uuid::new_v4();
+
+        let path_file = format!("{}/media/{}/{}.{}",
+            env::current_dir().unwrap().to_string_lossy(),
+            user_id,
+            unique_name.to_string(),
+            extension_file
+        );
 
         media::save_user_file(&path_file, data).await;
 
         let file_db = match store.add_file(
             &file_name,
-            Uuid::new_v4(),
+            unique_name,
             &content_type,
             &""
         ).await {
