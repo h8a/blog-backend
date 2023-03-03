@@ -1,13 +1,15 @@
-use std::{env, path::Path};
+#[warn(unused_imports)]
+use std::env;
 
 use axum::{
-    extract::{State, Multipart},
-    http::header::AUTHORIZATION,
-    response::IntoResponse, Json, http::HeaderMap,
+    extract::{State, Multipart, Path},
+    http::header::{AUTHORIZATION},
+    response::{IntoResponse}, Json, http::HeaderMap, body::StreamBody,
 };
 use reqwest::StatusCode;
 use serde_json::json;
 use tokio::fs::create_dir_all;
+use tokio_util::io::ReaderStream;
 use uuid::Uuid;
 
 use crate::store::Store;
@@ -45,7 +47,8 @@ pub async fn upload_file(headers: HeaderMap, store: State<Store>, mut multiplart
             &file_name,
             unique_name,
             &content_type,
-            &""
+            &"",
+            user_id,
         ).await {
             Ok(file) => Ok(file),
             Err(_) => Err(false)
@@ -91,4 +94,27 @@ pub async fn upload_file(headers: HeaderMap, store: State<Store>, mut multiplart
         _ => (StatusCode::CREATED, Json(json!({"status": false}))),
     }
 
+}
+
+pub async fn get_media(Path(name_generated): Path<String>, store: State<Store>) -> impl IntoResponse {
+
+    return match store.get_media_by_name_generated(&name_generated.as_str()).await {
+        Ok(data) => {
+            let extension_file = data.content_type.split("/").collect::<Vec<&str>>()[1];
+
+            let file = match tokio::fs::File::open(format!("media/{}/{}.{}", data.user_id, data.name_generated, extension_file)).await {
+                Ok(file) => file,
+                Err(err) => return Err((StatusCode::NOT_FOUND, format!("File not found: {}", err)))
+            };
+
+            let stream = ReaderStream::new(file);
+            let body = StreamBody::new(stream);
+
+            Ok(body)
+        },
+        Err(e) => {
+            println!("ERROR: {:?}", e);
+            Err(e)
+        }
+    }
 }

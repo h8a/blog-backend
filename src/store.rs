@@ -100,22 +100,25 @@ impl Store {
         name: &str,
         name_generated: Uuid,
         content_type: &str,
-        path: &str
+        path: &str,
+        user_id: i32
     ) -> Result<Media, (StatusCode, String)> {
         match sqlx::query(
-            "INSERT INTO media (name, name_generated, content_type, path) VALUES ($1, $2, $3, $4)
-            RETURNING id, name, name_generated, content_type, path"
+            "INSERT INTO media (name, name_generated, content_type, path, user_id) VALUES ($1, $2, $3, $4, $5)
+            RETURNING id, name, name_generated, content_type, path, user_id"
         )
         .bind(name)
         .bind(name_generated)
         .bind(content_type)
         .bind(path)
+        .bind(user_id)
         .map(|row: PgRow| Media {
             id: Some(MediaId{id: row.get("id")}),
             name: row.get("name"),
             name_generated: row.get("name_generated"),
             content_type: row.get("content_type"),
             path: row.get("path"),
+            user_id: row.get("user_id")
         })
         .fetch_one(&self.connection)
         .await {
@@ -125,6 +128,23 @@ impl Store {
                 Err(internal_error(e))
             }
         }
+    }
+
+    pub async fn get_media_by_name_generated(&self, name_generated: &str) -> Result<Media, (StatusCode, String)> {
+        match sqlx::query("SELECT * FROM media WHERE name_generated = $1")
+            .bind(Uuid::parse_str(&name_generated).unwrap())
+            .map(|row: PgRow| Media {
+                id: Some(MediaId { id: row.get("id") }),
+                name: row.get("name"),
+                name_generated: row.get("name_generated"),
+                content_type: row.get("content_type"),
+                path: row.get("path"),
+                user_id: row.get("user_id")
+            })
+            .fetch_one(&self.connection).await {
+                Ok(media) => Ok(media),
+                Err(e) => Err(internal_error(e))
+            }
     }
 }
 

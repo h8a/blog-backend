@@ -13,4 +13,5 @@ pub struct Media {
     pub name_generated: Uuid,
     pub content_type: String,
     pub path: String,
+    pub user_id: i32,
 }
