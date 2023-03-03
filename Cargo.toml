@@ -12,7 +12,7 @@ path = "src/main.rs"
 name = "blog_backend"
 
 [dependencies]
-axum = { version = "0.6.1" }
+axum = { version = "0.6.1", features = ["multipart"] }
 chrono = { version = "0.4.23" }
 dotenv = { version = "0.15.0" }
 jsonwebtoken = { version = "8.2.0" }
@@ -21,8 +21,18 @@ rand_core = { version = "0.6", features = ["std"] }
 reqwest = "0.11"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = { version = "1.0.91" }
-sqlx = { version = "0.6", features = [ "runtime-tokio-rustls", "migrate", "postgres" ] }
+sqlx = { version = "0.6", features = [ "runtime-tokio-rustls", "migrate", "postgres", "uuid" ] }
 tokio = { version = "1.0", features = ["full"] }
+tokio-util = { version = "0.7.7", features = ["full"]  }
+
+[dependencies.uuid]
+version = "1.2.2"
+features = [
+    "v4",
+    "fast-rng",
+    "macro-diagnostics",
+    "serde"
+]
 
 [dev-dependencies]
 axum-test-helper = "0.*" # alternatively specify the version as "0.2.0"
