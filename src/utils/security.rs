@@ -1,6 +1,6 @@
 use chrono::{Duration, Utc};
 use jsonwebtoken::{
-    // decode_header,
+    decode_header,
     decode,
     encode,
     Algorithm,
@@ -46,26 +46,31 @@ pub fn jwt_encode(user_id: &i32) -> String {
     };
 
     encode(
-        &Header::new(Algorithm::HS512), 
+        &Header::new(Algorithm::HS512),
         &claims, 
-        &EncodingKey::from_secret(dotenv::var("JWT_SECRET")
-            .unwrap()
-            .as_ref())
+        &EncodingKey::from_secret(dotenv::var("JWT_SECRET").unwrap().as_ref())
         )
         .unwrap()
 }
 
-pub fn jwt_decode(token: &str) -> Result<i32, bool> {
-    // println!("{:?}", decode_header(&token));
+pub fn jwt_decode(header: &str) -> Result<Claims, bool> {
+    let token = header.split(" ").last().unwrap();
     match decode::<Claims>(
             &token, 
             &DecodingKey::from_secret(dotenv::var("JWT_SECRET").unwrap().as_ref()
         ), 
         &Validation::new(Algorithm::HS512)
     ) {
-        Ok(user) => Ok(user.claims.id.parse::<i32>().unwrap()),
-        Err(_) => Err(false)
+        Ok(user) => Ok(user.claims),
+        Err(err) => {
+            println!("Error: {:?}", err);
+            Err(false)
+        }
     }
+}
+
+pub fn jwt_decode_header(token: &str) -> Result<Header, jsonwebtoken::errors::Error> {
+    decode_header(&token)
 }
 
 pub fn encode_password(password: &[u8]) -> String {
