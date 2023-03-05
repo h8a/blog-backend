@@ -7,5 +7,5 @@ CREATE TABLE IF NOT EXISTS users (
     last_name VARCHAR (255) NOT NULL,
     surname VARCHAR (255) NULL,
     picture VARCHAR (255) NULL,
-    created_on TIMESTAMP NOT NULL DEFAULT NOW()
+    created_on TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

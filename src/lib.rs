@@ -41,6 +41,7 @@ pub async fn router_app() -> Router {
         .route("/auth/register", post(resources::auth::register_user))
         .route("/media/file/upload", post(resources::media::upload_file))
         .route("/media/file/:name_generated", get(resources::media::get_media))
+        .route("/posts", post(resources::posts::create_posts))
         .with_state(db().await)
         .layer(DefaultBodyLimit::disable())
         .layer(middleware::from_fn(middleware_hooks::auth::authorization));
