@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS posts (
     title VARCHAR (255) NOT NULL,
     body TEXT NOT NULL,
     slug VARCHAR (510) NOT NULL,
-    created_on TIMESTAMP NOT NULL DEFAULT NOW(),
+    created_on TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     user_id INT,
     CONSTRAINT fk_user FOREIGN KEY(user_id) REFERENCES users(id)
 );
