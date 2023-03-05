@@ -175,6 +175,53 @@ impl Store {
             Err(e) => Err(internal_error(e))
         }
     }
+
+    pub async fn get_post(
+        &self,
+        id: i32
+    ) -> Result<Post, (StatusCode, String)> {
+        match sqlx::query("SELECT * FROM posts WHERE id = $1")
+        .bind(id)
+        .map(|row: PgRow| Post {
+            id: Some(PostId { id: row.get("id") }),
+            title: row.get("title"),
+            body: row.get("body"),
+            slug: Some(row.get("slug")),
+            created_on: Some(row.get("created_on")),
+            user_id: Some(row.get("user_id"))
+        })
+        .fetch_one(&self.connection).await {
+            Ok(post) => Ok(post),
+            Err(e) => Err(internal_error(e))
+        }
+    }
+
+    pub async fn update_posts(
+        &self,
+        id: i32,
+        title: &str,
+        body: &str,
+        slug: &str
+    ) -> Result<Post, (StatusCode, String)> {
+        match sqlx::query("UPDATE posts SET title = $1, body = $2, slug = $3 WHERE id = $4
+        RETURNING id, title, body, slug, created_on, user_id")
+        .bind(title)
+        .bind(body)
+        .bind(slug)
+        .bind(id)
+        .map(|row: PgRow| Post {
+            id: Some(PostId { id: row.get("id") }),
+            title: row.get("title"),
+            body: row.get("body"),
+            slug: Some(row.get("slug")),
+            created_on: Some(row.get("created_on")),
+            user_id: Some(row.get("user_id"))
+        })
+        .fetch_one(&self.connection).await {
+            Ok(post) => Ok(post),
+            Err(e) => Err(internal_error(e))
+        }
+    }
 }
 
 fn internal_error<E>(err: E) -> (StatusCode, String)
