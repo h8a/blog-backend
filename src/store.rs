@@ -2,11 +2,13 @@ use axum::async_trait;
 use axum::extract::{FromRef,FromRequestParts};
 use axum::http::{request::Parts, StatusCode};
 use sqlx::postgres::{PgPool, PgPoolOptions, PgRow};
+use sqlx::query;
 use sqlx::{Row, types::Uuid};
 // use uuid::Uuid;
 
 use crate::types::auth::{RegisterUserAuth, UserAuthId};
 use crate::types::media::{Media, MediaId};
+use crate::types::post::{Post, PostId};
 
 #[derive(Clone, Debug)]
 pub struct Store {
@@ -145,6 +147,80 @@ impl Store {
                 Ok(media) => Ok(media),
                 Err(e) => Err(internal_error(e))
             }
+    }
+
+    pub async fn create_posts(
+        &self,
+        title: &str,
+        body: &str,
+        slug: &str,
+        user_id: i32
+    ) -> Result<Post, (StatusCode, String)> {
+        match sqlx::query("INSERT INTO posts (title, body, slug, user_id) VALUES ($1, $2, $3, $4)
+        RETURNING id, title, body, slug, created_on, user_id")
+        .bind(title)
+        .bind(body)
+        .bind(slug)
+        .bind(user_id)
+        .map(|row: PgRow| Post {
+            id: Some(PostId{id: row.get("id")}),
+            title: row.get("title"),
+            body: row.get("body"),
+            slug: Some(row.get("slug")),
+            created_on: Some(row.get("created_on")),
+            user_id: Some(row.get("user_id"))
+        })
+        .fetch_one(&self.connection).await {
+            Ok(post) => Ok(post),
+            Err(e) => Err(internal_error(e))
+        }
+    }
+
+    pub async fn get_post(
+        &self,
+        id: i32
+    ) -> Result<Post, (StatusCode, String)> {
+        match sqlx::query("SELECT * FROM posts WHERE id = $1")
+        .bind(id)
+        .map(|row: PgRow| Post {
+            id: Some(PostId { id: row.get("id") }),
+            title: row.get("title"),
+            body: row.get("body"),
+            slug: Some(row.get("slug")),
+            created_on: Some(row.get("created_on")),
+            user_id: Some(row.get("user_id"))
+        })
+        .fetch_one(&self.connection).await {
+            Ok(post) => Ok(post),
+            Err(e) => Err(internal_error(e))
+        }
+    }
+
+    pub async fn update_posts(
+        &self,
+        id: i32,
+        title: &str,
+        body: &str,
+        slug: &str
+    ) -> Result<Post, (StatusCode, String)> {
+        match sqlx::query("UPDATE posts SET title = $1, body = $2, slug = $3 WHERE id = $4
+        RETURNING id, title, body, slug, created_on, user_id")
+        .bind(title)
+        .bind(body)
+        .bind(slug)
+        .bind(id)
+        .map(|row: PgRow| Post {
+            id: Some(PostId { id: row.get("id") }),
+            title: row.get("title"),
+            body: row.get("body"),
+            slug: Some(row.get("slug")),
+            created_on: Some(row.get("created_on")),
+            user_id: Some(row.get("user_id"))
+        })
+        .fetch_one(&self.connection).await {
+            Ok(post) => Ok(post),
+            Err(e) => Err(internal_error(e))
+        }
     }
 }
 

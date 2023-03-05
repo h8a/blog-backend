@@ -5,5 +5,5 @@ CREATE TABLE IF NOT EXISTS media (
     name_generated uuid NOT NULL,
     path VARCHAR (255) NOT NULL,
     content_type VARCHAR (255) NOT NULL,
-    created_on TIMESTAMP NOT NULL DEFAULT NOW()
+    created_on TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
