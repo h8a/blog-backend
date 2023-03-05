@@ -1,4 +1,3 @@
-// use chrono::serde::ts_seconds_option::deserialize as from_tsopt;
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize, Debug, Clone, Copy)]
@@ -12,9 +11,7 @@ pub struct Post {
     pub title: String,
     pub body: String,
     pub slug: Option<String>,
-    // #[serde(deserialize_with = "from_tsopt")]
-    // pub created_on: Option<chrono::DateTime<chrono::Utc>>,
-    pub created_on: Option<String>,
+    pub created_on: Option<chrono::DateTime<chrono::Utc>>,
     pub user_id: Option<i32>
 }
 

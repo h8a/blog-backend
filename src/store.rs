@@ -167,15 +167,11 @@ impl Store {
             title: row.get("title"),
             body: row.get("body"),
             slug: Some(row.get("slug")),
-            created_on: None,
-            // created_on: Some(chrono::DateTime::parse_from_str(row.get("created_on"), "%Y-%m-%d %H:%M%S%.5f").unwrap().to_string()),
+            created_on: Some(row.get("created_on")),
             user_id: Some(row.get("user_id"))
         })
         .fetch_one(&self.connection).await {
-            Ok(post) => {
-                println!("{:?}", post);
-                Ok(post)
-            },
+            Ok(post) => Ok(post),
             Err(e) => Err(internal_error(e))
         }
     }
