@@ -2,11 +2,13 @@ use axum::async_trait;
 use axum::extract::{FromRef,FromRequestParts};
 use axum::http::{request::Parts, StatusCode};
 use sqlx::postgres::{PgPool, PgPoolOptions, PgRow};
+use sqlx::query;
 use sqlx::{Row, types::Uuid};
 // use uuid::Uuid;
 
 use crate::types::auth::{RegisterUserAuth, UserAuthId};
 use crate::types::media::{Media, MediaId};
+use crate::types::post::{Post, PostId};
 
 #[derive(Clone, Debug)]
 pub struct Store {
@@ -145,6 +147,37 @@ impl Store {
                 Ok(media) => Ok(media),
                 Err(e) => Err(internal_error(e))
             }
+    }
+
+    pub async fn create_posts(
+        &self,
+        title: &str,
+        body: &str,
+        slug: &str,
+        user_id: i32
+    ) -> Result<Post, (StatusCode, String)> {
+        match sqlx::query("INSERT INTO posts (title, body, slug, user_id) VALUES ($1, $2, $3, $4)
+        RETURNING id, title, body, slug, created_on, user_id")
+        .bind(title)
+        .bind(body)
+        .bind(slug)
+        .bind(user_id)
+        .map(|row: PgRow| Post {
+            id: Some(PostId{id: row.get("id")}),
+            title: row.get("title"),
+            body: row.get("body"),
+            slug: Some(row.get("slug")),
+            created_on: None,
+            // created_on: Some(chrono::DateTime::parse_from_str(row.get("created_on"), "%Y-%m-%d %H:%M%S%.5f").unwrap().to_string()),
+            user_id: Some(row.get("user_id"))
+        })
+        .fetch_one(&self.connection).await {
+            Ok(post) => {
+                println!("{:?}", post);
+                Ok(post)
+            },
+            Err(e) => Err(internal_error(e))
+        }
     }
 }
 
