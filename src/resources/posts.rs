@@ -92,3 +92,28 @@ pub async fn update_posts(Path(id): Path<i32>, store: State<Store>, Json(payload
     };
 }
 
+
+pub async fn delete_posts(Path(id): Path<i32>, store: State<Store>) -> impl IntoResponse {
+    return match store.delete_posts(id).await {
+        Ok(is_deleted) => {
+            if is_deleted {
+                (StatusCode::ACCEPTED, Json(json!({
+                    "status": true,
+                })))
+            } else {
+                (StatusCode::BAD_REQUEST, Json(json!({
+                    "status": false,
+                    "message": "Error to the try delete post"
+                })))
+            }
+        },
+        Err(e) => {
+            println!("Error delete_post: {:?}", e);
+
+            (StatusCode::BAD_REQUEST, Json(json!({
+                "status": false,
+                "message": e.1
+            })))
+        }
+    };
+}
