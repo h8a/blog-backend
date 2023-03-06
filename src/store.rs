@@ -2,7 +2,6 @@ use axum::async_trait;
 use axum::extract::{FromRef,FromRequestParts};
 use axum::http::{request::Parts, StatusCode};
 use sqlx::postgres::{PgPool, PgPoolOptions, PgRow};
-use sqlx::query;
 use sqlx::{Row, types::Uuid};
 // use uuid::Uuid;
 
@@ -219,6 +218,18 @@ impl Store {
         })
         .fetch_one(&self.connection).await {
             Ok(post) => Ok(post),
+            Err(e) => Err(internal_error(e))
+        }
+    }
+
+    pub async fn delete_posts(
+        &self,
+        id: i32
+    ) -> Result<bool, (StatusCode, String)> {
+        match sqlx::query("DELETE FROM posts WHERE id = $1")
+        .bind(id)
+        .execute(&self.connection).await {
+            Ok(_) => Ok(true),
             Err(e) => Err(internal_error(e))
         }
     }
