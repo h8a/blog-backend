@@ -15,3 +15,8 @@ pub struct Post {
     pub user_id: Option<i32>
 }
 
+#[derive(Deserialize, Debug, Serialize)]
+pub struct Pagination {
+    pub page: usize,
+    pub per_page: usize,
+}

@@ -7,7 +7,7 @@ use sqlx::{Row, types::Uuid};
 
 use crate::types::auth::{RegisterUserAuth, UserAuthId};
 use crate::types::media::{Media, MediaId};
-use crate::types::post::{Post, PostId};
+use crate::types::post::{Post, PostId, Pagination};
 
 #[derive(Clone, Debug)]
 pub struct Store {
@@ -230,6 +230,28 @@ impl Store {
         .bind(id)
         .execute(&self.connection).await {
             Ok(_) => Ok(true),
+            Err(e) => Err(internal_error(e))
+        }
+    }
+
+    pub async fn list_posts(
+        &self,
+        start: i32,
+        limit: i32
+    ) -> Result<Vec<Post>, (StatusCode, String)> {
+        match sqlx::query("SELECT * FROM posts ORDER BY created_on DESC OFFSET $1 LIMIT $2")
+        .bind(start)
+        .bind(limit)
+        .map(|row: PgRow| Post {
+            id: Some(PostId { id: row.get("id") }),
+            title: row.get("title"),
+            body: row.get("body"),
+            slug: Some(row.get("slug")),
+            created_on: Some(row.get("created_on")),
+            user_id: Some(row.get("user_id"))
+        })
+        .fetch_all(&self.connection).await {
+            Ok(post) => Ok(post),
             Err(e) => Err(internal_error(e))
         }
     }
