@@ -1,5 +1,5 @@
 use axum::{
-    extract::{State, Path},
+    extract::{State, Path, Query},
     http::header::{AUTHORIZATION},
     Json,
     response::IntoResponse, 
@@ -10,7 +10,7 @@ use regex::Regex;
 use reqwest::StatusCode;
 use serde_json::json;
 
-use crate::{store::Store, types::post::Post, utils::auth};
+use crate::{store::Store, types::post::{Post, Pagination}, utils::auth};
 
 
 pub async fn create_posts(headers: HeaderMap, store: State<Store>, Json(payload): Json<Post>) -> impl IntoResponse {
@@ -106,6 +106,31 @@ pub async fn delete_posts(Path(id): Path<i32>, store: State<Store>) -> impl Into
                     "message": "Error to the try delete post"
                 })))
             }
+        },
+        Err(e) => {
+            println!("Error delete_post: {:?}", e);
+
+            (StatusCode::BAD_REQUEST, Json(json!({
+                "status": false,
+                "message": e.1
+            })))
+        }
+    };
+}
+
+pub async fn list_posts(pagination: Query<Pagination>, store: State<Store>) -> impl IntoResponse {
+    let pagination: Pagination = pagination.0;
+
+    let start = pagination.page as i32 - 1;
+    let limit = pagination.per_page as i32;
+
+    return match store.list_posts(start, limit).await {
+        Ok(posts) => {
+
+            (StatusCode::ACCEPTED, Json(json!({
+                "status": true,
+                "data": *axum::Json(posts)
+            })))
         },
         Err(e) => {
             println!("Error delete_post: {:?}", e);
