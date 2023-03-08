@@ -3,11 +3,10 @@ use axum::extract::{FromRef,FromRequestParts};
 use axum::http::{request::Parts, StatusCode};
 use sqlx::postgres::{PgPool, PgPoolOptions, PgRow};
 use sqlx::{Row, types::Uuid};
-// use uuid::Uuid;
 
 use crate::types::auth::{RegisterUserAuth, UserAuthId};
 use crate::types::media::{Media, MediaId};
-use crate::types::post::{Post, PostId, Pagination};
+use crate::types::post::{Post, PostId, ReferencesPosts, ReferencesPostsId};
 
 #[derive(Clone, Debug)]
 pub struct Store {
@@ -252,6 +251,90 @@ impl Store {
         })
         .fetch_all(&self.connection).await {
             Ok(post) => Ok(post),
+            Err(e) => Err(internal_error(e))
+        }
+    }
+
+    pub async fn create_references_posts(
+        &self,
+        name: &str,
+        url: &str,
+        post_id: i32,
+        user_id: i32
+    ) -> Result<ReferencesPosts, (StatusCode, String)> {
+        match sqlx::query("INSERT INTO posts_references (name, url, post_id, user_id) VALUES ($1, $2, $3, $4)
+        RETURNING id, name, url, created_on, post_id, user_id")
+        .bind(name)
+        .bind(url)
+        .bind(post_id)
+        .bind(user_id)
+        .map(|row: PgRow| ReferencesPosts {
+            id: Some(ReferencesPostsId{ id: row.get("id") }),
+            name: row.get("name"),
+            url: row.get("url"),
+            created_on: Some(row.get("created_on")),
+            post_id: Some(row.get("post_id")),
+            user_id: Some(row.get("user_id"))
+        })
+        .fetch_one(&self.connection).await {
+            Ok(reference) => Ok(reference),
+            Err(e) => Err(internal_error(e))
+        }
+    }
+
+    pub async fn update_references_posts(
+        &self,
+        id: i32,
+        title: &str,
+        url: &str
+    ) -> Result<ReferencesPosts, (StatusCode, String)> {
+        match sqlx::query("UPDATE posts_references SET name = $1, url = $2 WHERE id = $3
+        RETURNING id, name, url, created_on, post_id, user_id")
+        .bind(title)
+        .bind(url)
+        .bind(id)
+        .map(|row: PgRow| ReferencesPosts {
+            id: Some(ReferencesPostsId{ id: row.get("id") }),
+            name: row.get("name"),
+            url: row.get("url"),
+            created_on: Some(row.get("created_on")),
+            post_id: row.get("post_id"),
+            user_id: Some(row.get("user_id"))
+        })
+        .fetch_one(&self.connection).await {
+            Ok(reference) => Ok(reference),
+            Err(e) => Err(internal_error(e))
+        }
+    }
+
+    pub async fn delete_references_posts(
+        &self,
+        id: i32
+    ) -> Result<bool, (StatusCode, String)> {
+        match sqlx::query("DELETE FROM posts_references WHERE id = $1")
+        .bind(id)
+        .execute(&self.connection).await {
+            Ok(_) => Ok(true),
+            Err(e) => Err(internal_error(e))
+        }
+    }
+
+    pub async fn lists_references_posts(
+        &self,
+        post_id: i32
+    ) -> Result<Vec<ReferencesPosts>, (StatusCode, String)> {
+        match sqlx::query("SELECT * FROM posts_references WHERE post_id = $1")
+        .bind(post_id)
+        .map(|row: PgRow| ReferencesPosts {
+            id: Some(ReferencesPostsId { id: row.get("id") }),
+            name: row.get("name"),
+            url: row.get("url"),
+            created_on: Some(row.get("created_on")),
+            post_id: Some(row.get("post_id")),
+            user_id: Some(row.get("user_id"))
+        })
+        .fetch_all(&self.connection).await {
+            Ok(references) => Ok(references),
             Err(e) => Err(internal_error(e))
         }
     }

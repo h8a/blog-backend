@@ -15,5 +15,7 @@ CREATE TABLE IF NOT EXISTS posts_references (
     url TEXT,
     created_on TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     post_id INT,
-    CONSTRAINT fk_post FOREIGN KEY(post_id) REFERENCES posts(id)
+    user_id INT,
+    CONSTRAINT fk_post FOREIGN KEY(post_id) REFERENCES posts(id),
+    CONSTRAINT fk_user FOREIGN KEY(user_id) REFERENCES users(id)
 );

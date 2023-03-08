@@ -45,6 +45,10 @@ pub async fn router_app() -> Router {
         .route("/posts", get(resources::posts::list_posts))
         .route("/posts/:id", put(resources::posts::update_posts))
         .route("/posts/:id", delete(resources::posts::delete_posts))
+        .route("/posts/references", post(resources::posts::create_references_posts))
+        .route("/posts/references/:id", get(resources::posts::lists_references_posts))
+        .route("/posts/references/:id", put(resources::posts::update_references_posts))
+        .route("/posts/references/:id", delete(resources::posts::delete_references_posts))
         .with_state(db().await)
         .layer(DefaultBodyLimit::disable())
         .layer(middleware::from_fn(middleware_hooks::auth::authorization));
@@ -57,6 +61,5 @@ pub async fn app(listener: &str) {
 
     axum::Server::bind(&addr)
         .serve(router_app().await.into_make_service())
-        .await
-        .unwrap();
+        .await;
 }
