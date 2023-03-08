@@ -7,6 +7,7 @@ use axum::{
     middleware::Next, 
     response::Response
 };
+use regex::RegexSet;
 
 use crate::utils::security::jwt_decode;
 
@@ -15,8 +16,21 @@ pub async fn authorization<B>(req: Request<B>, next: Next<B>) -> Result<Response
         .get(AUTHORIZATION)
         .and_then(|header| header.to_str().ok());
 
-    match req.uri().path() {
-        "/auth/register" | "/auth/login" | "/healthcheck" => {
+    let patterns = [
+        r"/auth/register",
+        r"/auth/login",
+        r"/healthcheck",
+        r"^/posts",
+        r"^/posts/\d+",
+        r"^/posts/references",
+        r"^/posts/references/\d+"
+    ];
+    let text = req.uri().path();
+    let set = RegexSet::new(&patterns).unwrap();
+    let has_access = set.is_match(text);
+
+    match has_access {
+        true => {
             Ok(next.run(req).await)
         },
         _ => {
