@@ -378,6 +378,18 @@ impl Store {
             Err(e) => Err(internal_error(e))
         }
     }
+
+    pub async fn delete_comments_posts(
+        &self,
+        id: i32
+    ) -> Result<bool, (StatusCode, String)> {
+        match sqlx::query("DELETE FROM posts_comments WHERE id = $1")
+        .bind(id)
+        .execute(&self.connection).await {
+            Ok(_) => Ok(true),
+            Err(e) => Err(internal_error(e))
+        }
+    }
 }
 
 fn internal_error<E>(err: E) -> (StatusCode, String)

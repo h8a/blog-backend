@@ -275,3 +275,28 @@ pub async fn create_comments_posts(store: State<Store>, Json(payload): Json<Comm
         }
     }
 }
+
+pub async fn delete_comments_posts(Path(id): Path<i32>, store: State<Store>) -> impl IntoResponse {
+    match store.delete_comments_posts(id).await {
+        Ok(is_deleted) => {
+            if is_deleted {
+                (StatusCode::ACCEPTED, Json(json!({
+                    "status": true,
+                })))
+            } else {
+                (StatusCode::BAD_REQUEST, Json(json!({
+                    "status": false,
+                    "message": "Error to the try delete comments"
+                })))
+            }
+        },
+        Err(e) => {
+            println!("Error delete_comments_post: {:?}", e);
+
+            (StatusCode::BAD_REQUEST, Json(json!({
+                "status": false,
+                "message": e.1
+            })))
+        }
+    }
+}
