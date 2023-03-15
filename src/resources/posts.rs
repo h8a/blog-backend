@@ -10,7 +10,7 @@ use regex::Regex;
 use reqwest::StatusCode;
 use serde_json::json;
 
-use crate::{store::Store, types::post::{Post, Pagination, ReferencesPosts}, utils::auth};
+use crate::{store::Store, types::post::{Post, Pagination, ReferencesPosts, CommentsPosts}, utils::auth};
 
 
 pub async fn create_posts(headers: HeaderMap, store: State<Store>, Json(payload): Json<Post>) -> impl IntoResponse {
@@ -242,4 +242,36 @@ pub async fn lists_references_posts(Path(id): Path<i32>, store: State<Store>) ->
             })))
         }
     };
+}
+
+pub async fn create_comments_posts(store: State<Store>, Json(payload): Json<CommentsPosts>) -> impl IntoResponse {
+    match store.create_comments_posts(
+        &payload.comment,
+        &payload.nickname,
+        &payload.email,
+        payload.post_id,
+        payload.parent_id
+    ).await {
+        Ok(comment) => {
+            (StatusCode::CREATED, Json(json!({
+                "status": true,
+                "data": {
+                    "id": comment.id.unwrap().id,
+                    "comment": comment.comment,
+                    "created_on": comment.created_on.unwrap().timestamp_millis(),
+                    "nickname": comment.nickname,
+                    "email": comment.email,
+                    "post_id": comment.post_id,
+                    "parent_id": comment.parent_id
+                }
+            })))
+        },
+        Err(e) => {
+
+            (StatusCode::BAD_REQUEST, Json(json!({
+                "status": false,
+                "message": e.1
+            })))
+        }
+    }
 }

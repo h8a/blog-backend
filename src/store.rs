@@ -6,7 +6,7 @@ use sqlx::{Row, types::Uuid};
 
 use crate::types::auth::{RegisterUserAuth, UserAuthId};
 use crate::types::media::{Media, MediaId};
-use crate::types::post::{Post, PostId, ReferencesPosts, ReferencesPostsId};
+use crate::types::post::{Post, PostId, ReferencesPosts, ReferencesPostsId, CommentsPosts, CommentsPostsId};
 
 #[derive(Clone, Debug)]
 pub struct Store {
@@ -335,6 +335,46 @@ impl Store {
         })
         .fetch_all(&self.connection).await {
             Ok(references) => Ok(references),
+            Err(e) => Err(internal_error(e))
+        }
+    }
+
+    pub async fn create_comments_posts(
+        &self,
+        comment: &str,
+        nickname: &str,
+        email: &str,
+        post_id: i32,
+        parent_id: Option<i32>
+    ) -> Result<CommentsPosts, (StatusCode, String)> {
+        let parent = if parent_id.is_some() { parent_id } else { None };
+
+        let query;
+        if parent.is_some() {
+            query = "INSERT INTO posts_comments (comment, nickname, email, post_id, parent_id) VALUES ($1, $2, $3, $4, $5)
+            RETURNING id, comment, nickname, email, post_id, parent_id, created_on";
+        } else {
+            query = "INSERT INTO posts_comments (comment, nickname, email, post_id, parent_id) VALUES ($1, $2, $3, $4, null)
+            RETURNING id, comment, nickname, email, post_id, parent_id, created_on";
+        }
+
+        match sqlx::query(query)
+        .bind(comment)
+        .bind(nickname)
+        .bind(email)
+        .bind(post_id)
+        .bind(parent)
+        .map(|row: PgRow| CommentsPosts {
+            id: Some(CommentsPostsId{ id: row.get("id") }),
+            comment: row.get("comment"),
+            created_on: Some(row.get("created_on")),
+            nickname: row.get("nickname"),
+            email: row.get("email"),
+            post_id: row.get("post_id"),
+            parent_id: row.get("parent_id")
+        })
+        .fetch_one(&self.connection).await {
+            Ok(comment) => Ok(comment),
             Err(e) => Err(internal_error(e))
         }
     }
