@@ -10,7 +10,7 @@ use regex::Regex;
 use reqwest::StatusCode;
 use serde_json::json;
 
-use crate::{store::Store, types::post::{Post, Pagination, ReferencesPosts}, utils::auth};
+use crate::{store::Store, types::post::{Post, Pagination, ReferencesPosts, CommentsPosts}, utils::auth};
 
 
 pub async fn create_posts(headers: HeaderMap, store: State<Store>, Json(payload): Json<Post>) -> impl IntoResponse {
@@ -242,4 +242,95 @@ pub async fn lists_references_posts(Path(id): Path<i32>, store: State<Store>) ->
             })))
         }
     };
+}
+
+pub async fn create_comments_posts(store: State<Store>, Json(payload): Json<CommentsPosts>) -> impl IntoResponse {
+    match store.create_comments_posts(
+        &payload.comment,
+        &payload.nickname,
+        &payload.email,
+        payload.post_id,
+        payload.parent_id
+    ).await {
+        Ok(comment) => {
+            (StatusCode::CREATED, Json(json!({
+                "status": true,
+                "data": {
+                    "id": comment.id.unwrap().id,
+                    "comment": comment.comment,
+                    "created_on": comment.created_on.unwrap().timestamp_millis(),
+                    "nickname": comment.nickname,
+                    "email": comment.email,
+                    "post_id": comment.post_id,
+                    "parent_id": comment.parent_id
+                }
+            })))
+        },
+        Err(e) => {
+
+            (StatusCode::BAD_REQUEST, Json(json!({
+                "status": false,
+                "message": e.1
+            })))
+        }
+    }
+}
+
+pub async fn delete_comments_posts(Path(id): Path<i32>, store: State<Store>) -> impl IntoResponse {
+    match store.delete_comments_posts(id).await {
+        Ok(is_deleted) => {
+            if is_deleted {
+                (StatusCode::ACCEPTED, Json(json!({
+                    "status": true,
+                })))
+            } else {
+                (StatusCode::BAD_REQUEST, Json(json!({
+                    "status": false,
+                    "message": "Error to the try delete comments"
+                })))
+            }
+        },
+        Err(e) => {
+            println!("Error delete_comments_post: {:?}", e);
+
+            (StatusCode::BAD_REQUEST, Json(json!({
+                "status": false,
+                "message": e.1
+            })))
+        }
+    }
+}
+
+pub async fn lists_comments_posts(Path(id): Path<i32>, store: State<Store>) -> impl IntoResponse {
+    match store.lists_comments_posts(id).await {
+        Ok(comments) => {
+
+            let mut response_comments = Vec::new();
+
+            for comment in comments.iter() {
+                response_comments.push(json!({
+                    "id": comment.id.as_ref().unwrap().id,
+                    "comment": comment.comment,
+                    "nickname": comment.nickname,
+                    "email": comment.email,
+                    "created_on": comment.created_on.unwrap().timestamp_millis(),
+                    "post_id": comment.post_id,
+                    "parent_id": comment.parent_id
+                }));
+            }
+
+            (StatusCode::ACCEPTED, Json(json!({
+                "status": true,
+                "data": response_comments
+            })))
+        },
+        Err(e) => {
+            println!("Error delete_comments_post: {:?}", e);
+
+            (StatusCode::BAD_REQUEST, Json(json!({
+                "status": false,
+                "message": e.1
+            })))
+        }
+    }
 }
