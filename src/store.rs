@@ -390,6 +390,48 @@ impl Store {
             Err(e) => Err(internal_error(e))
         }
     }
+
+    pub async fn lists_comments_posts(
+        &self,
+        post_id: i32,
+    ) -> Result<Vec<CommentsPosts>, (StatusCode, String)> {
+        match sqlx::query("SELECT * FROM posts_comments WHERE post_id = $1 ORDER BY created_on ASC")
+        .bind(post_id)
+        .map(|row: PgRow| CommentsPosts {
+            id: Some(CommentsPostsId { id: row.get("id") }),
+            comment: row.get("comment"),
+            created_on: Some(row.get("created_on")),
+            nickname: row.get("nickname"),
+            email: row.get("email"),
+            post_id: row.get("post_id"),
+            parent_id: row.get("parent_id")
+        })
+        .fetch_all(&self.connection).await {
+            Ok(comments) => Ok(comments),
+            Err(e) => Err(internal_error(e))
+        }
+    }
+
+    // pub async fn list_response_comments_posts(
+    //     &self,
+    //     comment_id: i32
+    // ) -> Result<Vec<CommentsPosts>, (StatusCode, String)> {
+    //     match sqlx::query("SELECT * FROM posts_commnets WHERE parent_id = $1")
+    //     .bind(comment_id)
+    //     .map(|row: PgRow| CommentsPosts {
+    //         id: Some(CommentsPostsId { id: row.get("id") }),
+    //         comment: row.get("comment"),
+    //         created_on: Some(row.get("created_on")),
+    //         nickname: row.get("nickname"),
+    //         email: row.get("email"),
+    //         post_id: row.get("post_id"),
+    //         parent_id: row.get("parent_id")
+    //     })
+    //     .fetch_all(&self.connection).await {
+    //         Ok(comments) => Ok(comments),
+    //         Err(e) => Err(internal_error(e))
+    //     }
+    // }
 }
 
 fn internal_error<E>(err: E) -> (StatusCode, String)

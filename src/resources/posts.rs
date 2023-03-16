@@ -300,3 +300,37 @@ pub async fn delete_comments_posts(Path(id): Path<i32>, store: State<Store>) -> 
         }
     }
 }
+
+pub async fn lists_comments_posts(Path(id): Path<i32>, store: State<Store>) -> impl IntoResponse {
+    match store.lists_comments_posts(id).await {
+        Ok(comments) => {
+
+            let mut response_comments = Vec::new();
+
+            for comment in comments.iter() {
+                response_comments.push(json!({
+                    "id": comment.id.as_ref().unwrap().id,
+                    "comment": comment.comment,
+                    "nickname": comment.nickname,
+                    "email": comment.email,
+                    "created_on": comment.created_on.unwrap().timestamp_millis(),
+                    "post_id": comment.post_id,
+                    "parent_id": comment.parent_id
+                }));
+            }
+
+            (StatusCode::ACCEPTED, Json(json!({
+                "status": true,
+                "data": response_comments
+            })))
+        },
+        Err(e) => {
+            println!("Error delete_comments_post: {:?}", e);
+
+            (StatusCode::BAD_REQUEST, Json(json!({
+                "status": false,
+                "message": e.1
+            })))
+        }
+    }
+}

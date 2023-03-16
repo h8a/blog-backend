@@ -47,6 +47,7 @@ pub async fn router_app() -> Router {
         .route("/posts/:id", delete(resources::posts::delete_posts))
         .route("/posts/comments", post(resources::posts::create_comments_posts))
         .route("/posts/comments/:id", delete(resources::posts::delete_comments_posts))
+        .route("/posts/comments/:id", get(resources::posts::lists_comments_posts))
         .route("/posts/references", post(resources::posts::create_references_posts))
         .route("/posts/references/:id", get(resources::posts::lists_references_posts))
         .route("/posts/references/:id", put(resources::posts::update_references_posts))

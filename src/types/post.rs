@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 
+
 #[derive(Deserialize, Serialize, Debug, Clone, Copy)]
 pub struct PostId {
     pub id: i32,
